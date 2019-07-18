@@ -5,6 +5,7 @@ import torch.distributed as dist
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.data import DataLoader
+import os
 
 import test  # import test.py to get mAP after each epoch
 from models import *
@@ -56,12 +57,13 @@ def train(cfg,
           img_size=416,
           epochs=100,  # 500200 batches at bs 16, 117263 images = 273 epochs
           batch_size=16,
-          accumulate=4):  # effective bs = batch_size * accumulate = 8 * 8 = 64
+          accumulate=4,
+          note='note'):  # effective bs = batch_size * accumulate = 8 * 8 = 64
     # Initialize
     init_seeds()
-    weights = 'weights' + os.sep
-    last = weights + 'last.pt'
-    best = weights + 'best.pt'
+    weights = 'weights'+os.sep
+    last = os.path.join(weights,note,'last.pt')
+    best = os.path.join(weights,note,'best.pt')
     device = torch_utils.select_device()
     multi_scale = opt.multi_scale
 
@@ -211,7 +213,7 @@ def train(cfg,
 
             # Multi-Scale training TODO: short-side to 32-multiple https://github.com/ultralytics/yolov3/issues/358
             if multi_scale:
-                if (i + nb * epoch) / accumulate % 10 == 0:  #  adjust (67% - 150%) every 10 batches
+                if (i + nb * epoch) / accumulate % 10 == 0:  #  adjust (67% - 150%) every 10 batches
                     img_size = random.choice(range(img_size_min, img_size_max + 1)) * 32
                     # print('img_size = %g' % img_size)
                 scale_factor = img_size / max(imgs.shape[-2:])
@@ -323,6 +325,7 @@ def print_mutation(hyp, results):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--note',default=None,required=True,help='note')
     parser.add_argument('--epochs', type=int, default=100, help='number of epochs')
     parser.add_argument('--batch-size', type=int, default=16, help='batch size')
     parser.add_argument('--accumulate', type=int, default=4, help='number of batches to accumulate before optimizing')
@@ -353,7 +356,8 @@ if __name__ == '__main__':
                     img_size=opt.img_size,
                     epochs=opt.epochs,
                     batch_size=opt.batch_size,
-                    accumulate=opt.accumulate)
+                    accumulate=opt.accumulate,
+                    note=opt.note)
 
     # Evolve hyperparameters (optional)
     if opt.evolve:
