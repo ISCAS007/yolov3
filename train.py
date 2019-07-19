@@ -62,8 +62,9 @@ def train(cfg,
     # Initialize
     init_seeds()
     weights = 'weights'+os.sep
-    last = os.path.join(weights,note,'last.pt')
+    last = os.path.join(weights,note,'latest.pt')
     best = os.path.join(weights,note,'best.pt')
+    os.makedirs(os.path.join(weights,note),exist_ok=False)
     device = torch_utils.select_device()
     multi_scale = opt.multi_scale
 
@@ -295,7 +296,7 @@ def train(cfg,
 
             # Save backup every 10 epochs (optional)
             if epoch > 0 and epoch % 10 == 0:
-                torch.save(chkpt, weights + 'backup%g.pt' % epoch)
+                torch.save(chkpt, os.path.join(weights,note,'backup%g.pt' % epoch))
 
             # Delete checkpoint
             del chkpt
