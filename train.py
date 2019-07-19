@@ -57,10 +57,10 @@ def train(cfg,
           img_size=416,
           epochs=100,  # 500200 batches at bs 16, 117263 images = 273 epochs
           batch_size=16,
-          accumulate=4,
-          note='note'):  # effective bs = batch_size * accumulate = 8 * 8 = 64
+          accumulate=4):  # effective bs = batch_size * accumulate = 8 * 8 = 64
     # Initialize
     init_seeds()
+    note=opt.note
     weights = 'weights'+os.sep
     last = os.path.join(weights,note,'latest.pt')
     best = os.path.join(weights,note,'best.pt')
@@ -90,7 +90,7 @@ def train(cfg,
     if opt.resume or opt.transfer:  # Load previously saved model
         if opt.transfer:  # Transfer learning
             nf = int(model.module_defs[model.yolo_layers[0] - 1]['filters'])  # yolo layer size (i.e. 255)
-            chkpt = torch.load(weights + 'yolov3-spp.pt', map_location=device)
+            chkpt = torch.load(opt.load_weight_path, map_location=device)
             model.load_state_dict({k: v for k, v in chkpt['model'].items() if v.numel() > 1 and v.shape[0] != 255},
                                   strict=False)
 
@@ -107,7 +107,7 @@ def train(cfg,
             optimizer.load_state_dict(chkpt['optimizer'])
             best_fitness = chkpt['best_fitness']
 
-        if chkpt['training_results'] is not None:
+        if 'training_results' in chkpt.keys() and chkpt['training_results'] is not None:
             with open('results.txt', 'w') as file:
                 file.write(chkpt['training_results'])  # write results.txt
 
@@ -344,6 +344,7 @@ if __name__ == '__main__':
     parser.add_argument('--evolve', action='store_true', help='evolve hyperparameters')
     parser.add_argument('--bucket', type=str, default='', help='gsutil bucket')
     parser.add_argument('--var', default=0, type=int, help='debug variable')
+    parser.add_argument('--load_weight_path',default='weights/yolov3-spp.pt',help='default load path for checkpoint')
     opt = parser.parse_args()
     print(opt)
 
@@ -357,8 +358,7 @@ if __name__ == '__main__':
                     img_size=opt.img_size,
                     epochs=opt.epochs,
                     batch_size=opt.batch_size,
-                    accumulate=opt.accumulate,
-                    note=opt.note)
+                    accumulate=opt.accumulate)
 
     # Evolve hyperparameters (optional)
     if opt.evolve:
