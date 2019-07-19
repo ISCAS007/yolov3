@@ -20,7 +20,9 @@ from utils.utils import *
 # 0.298	0.244	0.167	0.247	4.99	0.8896	4.067	0.1694	21.41	2.033	25.61	1.783	0.4115	0.00128	    -4	0.950	0.000377  # hb
 # 0.268	0.268	0.178	0.240	4.36	1.104	5.596	0.2087	14.47	2.599	16.27	2.406	0.4114	0.001585	-4	0.950	0.000524  # hc
 # 0.161	0.327	0.190	0.193	7.82	1.153	4.062	0.1845	24.28	3.05	20.93	2.842	0.2759	0.001357	-4	0.916	0.000572  # hd 320 --epochs 2
-
+import torch
+from distutils.version import LooseVersion
+assert LooseVersion(torch.__version__)>=LooseVersion("1.0"),'torch version shoule > 1.0'
 
 # Training hyperparameters a
 hyp = {'giou': 0.8541,  # giou loss gain
