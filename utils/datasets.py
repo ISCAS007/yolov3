@@ -40,7 +40,7 @@ def exif_size(img):
 
 class LoadImages:  # for inference
     def __init__(self, path, img_size=416):
-        self.height = img_size
+        self.img_size = img_size
 
         files = []
         if os.path.isdir(path):
@@ -96,7 +96,7 @@ class LoadImages:  # for inference
             print('image %g/%g %s: ' % (self.count, self.nF, path), end='')
 
         # Padded resize
-        img, *_ = letterbox(img0, new_shape=self.height)
+        img, *_ = letterbox(img0, new_shape=self.img_size)
 
         # Normalize RGB
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB
@@ -118,7 +118,7 @@ class LoadImages:  # for inference
 class LoadWebcam:  # for inference
     def __init__(self, img_size=416):
         self.cam = cv2.VideoCapture(0)
-        self.height = img_size
+        self.img_size = img_size
 
     def __iter__(self):
         self.count = -1
@@ -138,7 +138,7 @@ class LoadWebcam:  # for inference
         print('webcam %g: ' % self.count, end='')
 
         # Padded resize
-        img, *_ = letterbox(img0, new_shape=self.height)
+        img, *_ = letterbox(img0, new_shape=self.img_size)
 
         # Normalize RGB
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB
@@ -405,7 +405,8 @@ def letterbox(img, new_shape=416, color=(127.5, 127.5, 127.5), mode='auto'):
 
     top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
     left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
-    img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_AREA)  # resized, no border
+    if shape[::-1] != new_unpad:
+        img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_AREA)  # resized, no border
     img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # padded square
     return img, ratiow, ratioh, dw, dh
 
