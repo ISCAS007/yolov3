@@ -1,5 +1,5 @@
 import os
-
+import warnings
 import torch.nn.functional as F
 
 from utils.parse_config import *
@@ -35,6 +35,10 @@ def create_modules(module_defs):
                 modules.add_module('batch_norm_%d' % i, nn.BatchNorm2d(filters))
             if module_def['activation'] == 'leaky':
                 modules.add_module('leaky_%d' % i, nn.LeakyReLU(0.1, inplace=True))
+            elif module_def['activation'] == 'relu':
+                modules.add_module('relu_%d'%i,nn.ReLU(inplace=True))
+            else:
+                warnings.warn('unknown activate {}'.format(module_def['activation']))
 
         elif module_def['type'] == 'maxpool':
             kernel_size = int(module_def['size'])
@@ -68,6 +72,12 @@ def create_modules(module_defs):
             img_size = hyperparams['height']
             # Define detection layer
             modules.add_module('yolo_%d' % i, YOLOLayer(anchors, nc, img_size, yolo_index))
+        elif module_def['type'] == 'avgpool':
+            modules.add_module('avgpool_%d'%i,GlobalAvgPool2d())
+        elif module_def['type'] == 'softmax':
+            modules.add_module('softmax_%d'%i,nn.Softmax(dim=1))
+        else:
+            warnings.warn('unknown type {}'.format(module_def['type']))
 
         # Register module list and number of output filters
         module_list.append(modules)
@@ -85,6 +95,17 @@ class EmptyLayer(nn.Module):
     def forward(self, x):
         return x
 
+class GlobalAvgPool2d(nn.Module):
+    """ Global Average pooling over last two spatial dimensions. """
+
+    def __init__(self):
+        super(GlobalAvgPool2d, self).__init__()
+
+    def forward(self, input):
+        return input.mean(dim=3, keepdim=True).mean(dim=2, keepdim=True)
+
+    def __repr__(self):
+        return self.__class__.__name__ + '( )'
 
 class YOLOLayer(nn.Module):
     def __init__(self, anchors, nc, img_size, yolo_index):
@@ -193,6 +214,15 @@ class Darknet(nn.Module):
             elif mtype == 'yolo':
                 x = module[0](x, img_size)
                 output.append(x)
+            elif mtype == 'avgpool':
+                x = module(x)
+                output.append(x)
+            elif mtype == 'softmax':
+                x = module(x)
+                output.append(x)
+            else:
+                warnings.warn('unknown mtype {}'.format(mtype))
+
             layer_outputs.append(x)
 
         if self.training:
@@ -242,6 +272,56 @@ def create_grids(self, img_size=416, ng=(13, 13), device='cpu'):
     self.nx = nx
     self.ny = ny
 
+def load_vgg_weights(self,weight,cutoff=-1):
+    files={
+            'vgg11':'vgg11-bbd30ac9.pth',
+            'vgg13':'vgg13-c768596a.pth',
+            'vgg16':'vgg16-397923af.pth',
+            'vgg19':'vgg19-dcbb9e9d.pth',
+            'vgg11_bn':'vgg11_bn-6002323d.pth',
+            'vgg13_bn':'vgg13_bn-abd245e5.pth',
+            'vgg16_bn':'vgg16_bn-6c64b313.pth',
+            'vgg19_bn':'vgg19_bn-c79401a0.pth'}
+
+    weight_file=os.path.join(os.path.expanduser('~/.torch/models'),files[weight])
+
+    state_dict=torch.load(weight_file)
+    gen=state_dict.items().__iter__()
+
+    for i, (module_def, module) in enumerate(zip(self.module_defs[:cutoff], self.module_list[:cutoff])):
+#        idx,m=gen.__next__()
+#        print(module_def['type'],idx,m.__class__.__name__)
+        print(module_def['type'],module.state_dict().keys())
+        keys=[k for k in module.state_dict().keys()]
+        if module_def['type'] == 'convolutional':
+            if(len(module.state_dict())>0):
+                module_state_dict={}
+                idx=0
+                k,v=gen.__next__()
+                module.weight=v
+                module_state_dict[keys[idx]]=v
+                idx+=1
+                k,v=gen.__next__()
+                module.bias=v
+                module_state_dict[keys[idx]]=v
+                idx+=1
+                module.load_state_dict(module_state_dict)
+        elif module_def['type'] == 'maxpool':
+            pass
+        else:
+            print('unknown object',module_def['type'])
+
+    cutoff_dict={
+            'vgg11':'vgg11-bbd30ac9.pth',
+            'vgg13':'vgg13-c768596a.pth',
+            'vgg16': 6,
+            'vgg19':'vgg19-dcbb9e9d.pth',
+            'vgg11_bn':'vgg11_bn-6002323d.pth',
+            'vgg13_bn':'vgg13_bn-abd245e5.pth',
+            'vgg16_bn':'vgg16_bn-6c64b313.pth',
+            'vgg19_bn':'vgg19_bn-c79401a0.pth'}
+
+    return cutoff_dict[weight]
 
 def load_darknet_weights(self, weights, cutoff=-1):
     # Parses and loads the weights stored in 'weights'

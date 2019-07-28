@@ -66,7 +66,7 @@ def train(cfg,
     weights = 'weights'+os.sep
     last = os.path.join(weights,note,'latest.pt')
     best = os.path.join(weights,note,'best.pt')
-    os.makedirs(os.path.join(weights,note),exist_ok=False)
+    os.makedirs(os.path.join(weights,note),exist_ok=opt.exist_ok)
     device = torch_utils.select_device()
     multi_scale = opt.multi_scale
 
@@ -119,6 +119,8 @@ def train(cfg,
     else:  # Initialize model with backbone (optional)
         if '-tiny.cfg' in cfg:
             cutoff = load_darknet_weights(model, weights + 'yolov3-tiny.conv.15')
+        elif 'vgg16' in cfg:
+            cutoff = load_vgg_weights(model,'vgg16', 18)
         else:
             cutoff = load_darknet_weights(model, weights + 'darknet53.conv.74')
 
@@ -344,6 +346,7 @@ if __name__ == '__main__':
     parser.add_argument('--notest', action='store_true', help='only test final epoch')
     parser.add_argument('--xywh', action='store_true', help='use xywh loss instead of GIoU loss')
     parser.add_argument('--evolve', action='store_true', help='evolve hyperparameters')
+    parser.add_argument('--exist_ok',action='store_true',help='overwrite on exist weight save dir')
     parser.add_argument('--bucket', type=str, default='', help='gsutil bucket')
     parser.add_argument('--var', default=0, type=int, help='debug variable')
     parser.add_argument('--load_weight_path',default='weights/yolov3-spp.pt',help='default load path for checkpoint')
