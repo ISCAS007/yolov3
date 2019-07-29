@@ -312,14 +312,14 @@ def load_vgg_weights(self,weight,cutoff=-1):
             print('unknown object',module_def['type'])
 
     cutoff_dict={
-            'vgg11':'vgg11-bbd30ac9.pth',
-            'vgg13':'vgg13-c768596a.pth',
+            'vgg11': 4,
+            'vgg13': 6,
             'vgg16': 6,
-            'vgg19':'vgg19-dcbb9e9d.pth',
-            'vgg11_bn':'vgg11_bn-6002323d.pth',
-            'vgg13_bn':'vgg13_bn-abd245e5.pth',
-            'vgg16_bn':'vgg16_bn-6c64b313.pth',
-            'vgg19_bn':'vgg19_bn-c79401a0.pth'}
+            'vgg19': 6,
+            'vgg11_bn': 4,
+            'vgg13_bn': 6,
+            'vgg16_bn': 6,
+            'vgg19_bn': 6}
 
     return cutoff_dict[weight]
 

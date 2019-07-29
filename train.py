@@ -119,8 +119,14 @@ def train(cfg,
     else:  # Initialize model with backbone (optional)
         if '-tiny.cfg' in cfg:
             cutoff = load_darknet_weights(model, weights + 'yolov3-tiny.conv.15')
+        elif 'vgg11' in cfg:
+            cutoff = load_vgg_weights(model,'vgg11', 13)
+        elif 'vgg13' in cfg:
+            cutoff = load_vgg_weights(model,'vgg13', 15)
         elif 'vgg16' in cfg:
             cutoff = load_vgg_weights(model,'vgg16', 18)
+        elif 'vgg19' in cfg:
+            cutoff = load_vgg_weights(model,'vgg19', 21)
         else:
             cutoff = load_darknet_weights(model, weights + 'darknet53.conv.74')
 
