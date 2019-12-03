@@ -16,6 +16,7 @@ def parse_model_cfg(path):
             value = value.strip()
             module_defs[-1][key.rstrip()] = value.strip()
 
+    file.close()
     return module_defs
 
 

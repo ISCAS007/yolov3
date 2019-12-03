@@ -37,6 +37,8 @@ def create_modules(module_defs):
                 modules.add_module('leaky_%d' % i, nn.LeakyReLU(0.1, inplace=True))
             elif module_def['activation'] == 'relu':
                 modules.add_module('relu_%d'%i,nn.ReLU(inplace=True))
+            elif module_def['activation'] == 'linear':
+                pass
             else:
                 warnings.warn('unknown activate {}'.format(module_def['activation']))
 
